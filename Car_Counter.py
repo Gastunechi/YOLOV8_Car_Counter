@@ -3,7 +3,7 @@ import cv2
 import cvzone
 import math
 from sort import *
-import ma
+
 
 
 cap = cv2.VideoCapture("../Videos/cars.mp4") #for video
@@ -31,6 +31,7 @@ tracker = Sort(max_age=20, min_hits=3, iou_threshold=0.3)
 limits = [400, 297, 673, 297]
 totalCount = []
 
+# Inference on video
 while True:
     success, img = cap.read()
     imgRegion = cv2.bitwise_and(img, mask)
@@ -47,10 +48,8 @@ while True:
             x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
             w, h = x2 - x1, y2 - y1
 
-
             #Confidence
             conf = math.ceil((box.conf[0]*100))/100
-            #print(conf)
 
             #Class name
             cls = int(box.cls[0])
@@ -58,13 +57,13 @@ while True:
 
             if (currentClass == 'car' or currentClass == 'bus' or currentClass == 'motorbike'
                     or currentClass == 'truck' and conf > 0.3):
-
                 currentArray = np.array([x1,y1,x2,y2,conf])
                 detections = np.vstack((detections, currentArray))
 
 
 
     resultTracker = tracker.update(detections)
+    # Counting line
     cv2.line(img, (limits[0], limits[1]),  (limits[2], limits[3]),(0,0,255), 5)
 
     for result in resultTracker:
@@ -79,16 +78,14 @@ while True:
         cx, cy = x1+w//2, y1+h//2
         cv2.circle(img, (cx,cy),5,(255,0,255), cv2.FILLED)
 
+        #  Vehicle counting logic
         if limits[0] < cx < limits[2] and limits[1] - 15 < cy < limits[3] + 15:
             if totalCount.count(id) == 0:
                 totalCount.append(id)
                 cv2.line(img, (limits[0], limits[1]), (limits[2], limits[3]), (0, 255, 0), 5)
 
-        #cvzone.putTextRect(img, f'Count = {len(totalCount)}', (50, 50),
-                           #scale=2.0, thickness=3, offset=10)
 
         cv2.putText(img, str(len(totalCount)), (255, 100), cv2.FONT_HERSHEY_PLAIN, 5, (50,50,255), 8)
-
 
 
     cv2.imshow("Image", img)

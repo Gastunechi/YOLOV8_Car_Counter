@@ -1,3 +1,4 @@
+import os
 from ultralytics import YOLO
 import cv2
 import cvzone
@@ -5,7 +6,17 @@ import math
 import numpy as np
 from sort import *
 
+# Création du dossier de sortie s'il n'existe pas
+output_folder = "car_count_result"
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+
+# Initialisation de l'écriture vidéo
 cap = cv2.VideoCapture("Videos\cars.mp4") #for video
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = int(cap.get(cv2.CAP_PROP_FPS))
+out = cv2.VideoWriter(os.path.join(output_folder, 'output.avi'), cv2.VideoWriter_fourcc(*'XVID'), fps, (width, height))
 
 model = YOLO('Yolo Weights\yolov8l.pt')
 
@@ -23,7 +34,7 @@ classNames = ["person", "bicycle", "car", "motorbike", "aeroplane", "bus", "trai
 
 mask = cv2.imread("3 Car Counter Project\mask.png")
 
-#Tracking
+# Tracking
 tracker = Sort(max_age=20, min_hits=3, iou_threshold=0.3)
 
 limits = [400, 297, 673, 297]
@@ -88,6 +99,14 @@ while True:
 
     cv2.putText(img, str(len(totalCount)), (255, 100), cv2.FONT_HERSHEY_PLAIN, 5, (50, 50, 255), 8)
 
+    # Écrire le frame traité dans le fichier vidéo
+    out.write(img)
+
     cv2.imshow("Image", img)
     # cv2.imshow("ImageRegion", imgRegion)
     cv2.waitKey(1)
+
+# Libérer les ressources
+cap.release()
+out.release()
+cv2.destroyAllWindows()
